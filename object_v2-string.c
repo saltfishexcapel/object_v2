@@ -3,9 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-static ObjectStrings* global_strings;
-static ObjectStrings* global_tmp_strings;
-
 void
 object_string_init (ObjectString* obj)
 {

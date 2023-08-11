@@ -6,7 +6,7 @@ VALGRIND = valgrind
 CC_ARGS = -Wall -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -g
 CC_LIBS = 
 CC_HEAD = -I.
-RM_ARGS = -v
+RM_ARGS = -v -f
 VALGRIND_ARGS = --leak-check=full 
 
 OBJECT = args_parser.o object_v2-hash.o object_v2-node.o object_v2-object.o object_v2-simple_chain.o object_v2-string.o object_v2-vector.o
@@ -33,4 +33,4 @@ memchk: $(TARGET)
 
 .PHONY: clean
 clean:
-	$(RM) $(RM_ARGS) $(OBJECT)
+	$(RM) $(RM_ARGS) $(OBJECT) $(TARGET)

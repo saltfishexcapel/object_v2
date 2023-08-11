@@ -9,7 +9,7 @@ args_init (Args* obj)
         if (!obj)
                 return;
         object_node_init (OBJECT_NODE (obj));
-        object_set_destory_func (OBJECT (obj), OBJECT_DEST_FUNC (args_destory));
+        object_set_destory_func (obj, args_destory);
         obj->arg_body = NULL;
         obj->arg_head = NULL;
         obj->type     = ARGS_TYPE_ALONG;
@@ -30,10 +30,10 @@ args_destruction (Args* obj)
         if (!obj)
                 return;
         /*解引用下一个节点*/
-        object_unref (OBJECT (OBJECT_NODE (obj)->next));
+        object_unref (OBJECT_NODE (obj)->next);
         /*解除引用自身的数据*/
-        object_unref (OBJECT (obj->arg_body));
-        object_unref (OBJECT (obj->arg_head));
+        object_unref (obj->arg_body);
+        object_unref (obj->arg_head);
 }
 
 void
@@ -72,8 +72,7 @@ arg_type_register_init (ArgTypeRegister* obj)
         if (!obj)
                 return;
         object_init (OBJECT (obj));
-        object_set_destory_func (OBJECT (obj),
-                                 OBJECT_DEST_FUNC (arg_type_register_destory));
+        object_set_destory_func (obj, arg_type_register_destory);
         obj->type = ARGS_TYPE_ALONG;
 }
 
@@ -101,8 +100,7 @@ args_object_init (ArgsObject* obj)
         if (!obj)
                 return;
         object_init (OBJECT (obj));
-        object_set_destory_func (OBJECT (obj),
-                                 OBJECT_DEST_FUNC (args_object_destory));
+        object_set_destory_func (obj, args_object_destory);
         obj->args_chain_head = NULL;
         obj->type_register   = object_hash_new ();
         obj->state           = ARGS_STATE_DEFAULT;
@@ -124,8 +122,8 @@ args_object_destruction (ArgsObject* obj)
 {
         if (!obj)
                 return;
-        object_unref (OBJECT (obj->args_chain_head));
-        object_unref (OBJECT (obj->type_register));
+        object_unref (obj->args_chain_head);
+        object_unref (obj->type_register);
 }
 
 void
