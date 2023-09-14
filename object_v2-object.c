@@ -18,10 +18,6 @@ object_new ()
         return obj;
 }
 
-inline void
-object_destruction (Object* obj __attribute__ ((unused)))
-{}
-
 void
 object_destory (Object* obj)
 {

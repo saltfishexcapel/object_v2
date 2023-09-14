@@ -10,9 +10,11 @@ RM_ARGS = -v -f
 VALGRIND_ARGS = --leak-check=full 
 
 OBJECT = args_parser.o object_v2-hash.o object_v2-node.o object_v2-object.o object_v2-simple_chain.o object_v2-string.o object_v2-vector.o
-OBJECT += test.o
+OBJECT += test_hash.o
 
 TARGET = test.out
+
+COMMAND = --files asdf a -a -bc -c -i -a -a
 
 all: $(TARGET)
 
@@ -29,7 +31,7 @@ debug: $(TARGET)
 	$(DEBUG) $(TARGET)
 
 memchk: $(TARGET)
-	$(VALGRIND) $(VALGRIND_ARGS) ./$(TARGET)
+	$(VALGRIND) $(VALGRIND_ARGS) ./$(TARGET) $(COMMAND)
 
 .PHONY: clean
 clean:

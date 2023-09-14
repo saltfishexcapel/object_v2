@@ -12,6 +12,7 @@ object_node_init (ObjectNode* obj)
         obj->prev       = NULL;
         obj->end        = obj;
         obj->head       = NULL;
+        obj->iter_flag  = NULL;
         obj->_dest_func = NULL;
 }
 

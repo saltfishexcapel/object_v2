@@ -93,6 +93,55 @@ object_hash_kv_get_value (ObjectHashKV* obj)
 }
 
 void
+object_hash_iter_reset (ObjectHash* obj)
+{
+        if (!obj || !obj->main_table)
+                return;
+        obj->current_iter = NULL;
+        obj->iter_num      = 0;
+        obj->state        = OBJECT_HASH_ITER_STATE_START;
+}
+
+ObjectHashKV*
+object_hash_iter_get (ObjectHash* obj)
+{
+        if (!obj || obj->table_size == 0)
+                return NULL;
+
+retry:
+        switch (obj->state) {
+        case OBJECT_HASH_ITER_STATE_START: {
+                obj->current_iter = obj->main_table[0];
+                break;
+        }
+        case OBJECT_HASH_ITER_STATE_DEFAULT: {
+                obj->current_iter = OBJECT_HASH_KV (
+                        object_node_get_next (OBJECT_NODE (obj->current_iter)));
+                break;
+        }
+        case OBJECT_HASH_ITER_STATE_NULL: {
+                obj->iter_num += 1;
+                obj->current_iter = obj->main_table[obj->iter_num];
+                break;
+        }
+        case OBJECT_HASH_ITER_STATE_END:
+                obj->current_iter = NULL;
+                break;
+        }
+
+        if (obj->current_iter) {
+                obj->state = OBJECT_HASH_ITER_STATE_DEFAULT;
+                return obj->current_iter;
+        } else if (obj->iter_num == obj->table_size) {
+                obj->state = OBJECT_HASH_ITER_STATE_END;
+                return NULL;
+        } else {
+                obj->state = OBJECT_HASH_ITER_STATE_NULL;
+                goto retry;
+        }
+}
+
+void
 object_hash_init (ObjectHash* obj)
 {
         if (!obj)

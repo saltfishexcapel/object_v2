@@ -12,7 +12,7 @@
 /*每次增加的哈希块大小*/
 #define OBJ_HASH_CHUNK_SZ 512
 /*每次可增加的哈希块大小最小值*/
-#define OBJ_HASH_CHUNK_MIN 5
+#define OBJ_HASH_CHUNK_MIN 20
 /*每次可增加的哈希块大小最大值*/
 #define OBJ_HASH_CHUNK_MAX 10240
 
@@ -48,8 +48,20 @@ void object_hash_kv_set_vdest_func (ObjectHashKV* obj, o_dest_func _vdest_func);
 o_ptr object_hash_kv_get_value (ObjectHashKV* obj);
 
 /**
+ * 哈希表迭代对象
+ */
+typedef enum _ObjectHashIterState ObjectHashIterState;
+enum _ObjectHashIterState
+{
+        OBJECT_HASH_ITER_STATE_START,
+        OBJECT_HASH_ITER_STATE_DEFAULT,
+        OBJECT_HASH_ITER_STATE_NULL,
+        OBJECT_HASH_ITER_STATE_END
+};
+
+/**
  * 单哈希表对象
-*/
+ */
 OBJECT_DECLARE (ObjectHash, object_hash)
 struct _ObjectHash
 {
@@ -60,6 +72,9 @@ struct _ObjectHash
         bool                 is_locked;      /*重哈希时上锁*/
         _object_hash_kv_ptr* main_table;     /*主存储表*/
         _object_hash_kv_ptr* cache_table;    /*临时挂载表*/
+        o_uint               iter_num;        /*表序数*/
+        ObjectHashKV*        current_iter;   /*当前迭代对象*/
+        ObjectHashIterState  state;          /*当前迭代状态*/
 };
 #define OBJECT_HASH(any_obj) ((ObjectHash*)(any_obj))
 
@@ -78,5 +93,9 @@ void object_hash_set_value (ObjectHash* obj,
 void object_hash_dest_value (ObjectHash* obj, const char* ckey, bool is_vkey);
 /*打印哈希表当前的所有数值分布以及使用量状态*/
 void object_hash_print_table (ObjectHash* obj);
+
+void object_hash_iter_reset (ObjectHash* obj);
+// 迭代哈希表的一个元素，使用状态机进行迭代
+ObjectHashKV* object_hash_iter_get (ObjectHash* obj);
 
 #endif

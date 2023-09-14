@@ -156,6 +156,17 @@ object_string_reference (ObjectString* obj)
         return object_reference_to (obj, OBJECT_STRING);
 }
 
+static bool
+object_strings_is_head (ObjectStrings* obj)
+{
+        if (!obj)
+                return false;
+        if (!object_node_get_prev (OBJECT_NODE (obj)))
+                return true;
+        else
+                return false;
+}
+
 void
 object_strings_init (ObjectStrings* obj)
 {
@@ -247,16 +258,17 @@ object_strings_dest_string (ObjectStrings*  strings_manager,
                         is_find = true;
                         break;
                 }
-                str = OBJECT_STRINGS (OBJECT_NODE (str)->next);
+                str = OBJECT_STRINGS (object_node_get_next (OBJECT_NODE (str)));
         }
         /*寻找到了已存在的 String*/
         if (is_find) {
                 /*如果不是头节点则直接调用节点删除方法*/
-                if (!OBJECT_NODE (str)->prev) {
+                if (!object_strings_is_head (str)) {
                         object_node_delete_node (OBJECT_NODE (str));
                 } else {
-                        *manager_var = OBJECT_STRINGS (OBJECT_NODE (str)->next);
-                        object_addref (*manager_var);
+                        *manager_var =
+                                object_reference_to (OBJECT_NODE (str)->next,
+                                                     OBJECT_STRINGS);
                         object_node_set_as_manager (OBJECT_NODE (*manager_var));
                         object_node_set_prev (OBJECT_NODE (str)->next, NULL);
                         object_unref (str);

@@ -72,6 +72,7 @@ arg_type_register_init (ArgTypeRegister* obj)
         if (!obj)
                 return;
         object_init (OBJECT (obj));
+        
         object_set_destory_func (obj, arg_type_register_destory);
         obj->type = ARGS_TYPE_ALONG;
 }
@@ -104,6 +105,7 @@ args_object_init (ArgsObject* obj)
         obj->args_chain_head = NULL;
         obj->type_register   = object_hash_new ();
         obj->state           = ARGS_STATE_DEFAULT;
+        obj->flag_build_in   = true;
         /*默认类型 -- */
         args_object_register_type (obj, arg_s_along, ARGS_TYPE_S_ALONG);
 }
@@ -181,6 +183,9 @@ args_object_catch_event (const char* arg_name, ArgTypeRegister* reg)
         case ARGS_TYPE_S_ALONG:
                 return ARGS_EVENT_S_ALONG;
 
+        case ARGS_TYPE_GROUP:
+                return ARGS_EVENT_GROUP;
+
         default:
                 return ARGS_TYPE_ALONG;
         }
@@ -239,6 +244,21 @@ args_object_get_build_in_head (const char* arg_name, char* pulls)
         return buf;
 }
 
+static bool
+args_object_is_group_head (ArgsObject* obj, const char* arg_name)
+{
+        ArgTypeRegister* reg;
+        char             test[3] = {'-', '\0', '\0'};
+        if (!obj || !arg_name || arg_name[0] != '-' || arg_name[1] == '\0')
+                return false;
+        test[1] = arg_name[1];
+        reg     = ARG_TYPE_REGISTER (
+                object_hash_get_value (obj->type_register, test, false));
+        if (reg && reg->type == ARGS_TYPE_GROUP)
+                return true;
+        return false;
+}
+
 /**
  * 为 ArgsObject 添加一对新的参数
  */
@@ -291,6 +311,22 @@ args_object_action_for_event_build_in (ArgsObject* obj, const char* arg_name)
         return true;
 }
 
+static bool
+args_object_action_for_event_group (ArgsObject* obj, const char* arg_name)
+{
+        char test[3] = {'-', '\0', '\0'};
+        for (int i = 1; arg_name[i] != '\0'; ++i) {
+                test[1] = arg_name[i];
+                args_object_add_node (obj, test, ARGS_TYPE_GROUP);
+                if (!object_hash_get_kv (obj->type_register, test, false)) {
+                        args_object_change_state (obj, ARGS_STATE_FAILED);
+                        return false;
+                }
+        }
+        args_object_change_state (obj, ARGS_STATE_DEFAULT);
+        return true;
+}
+
 static void
 args_object_action_for_event_more (ArgsObject* obj, const char* arg_name)
 {
@@ -319,6 +355,13 @@ args_object_action_for_state_default (ArgsObject*     obj,
         case ARGS_EVENT_BUILD_IN: {
                 is_success =
                         args_object_action_for_event_build_in (obj, arg_name);
+                if (is_success)
+                        return NULL;
+                else
+                        return ARGS (OBJECT_NODE (obj->args_chain_head)->end);
+        }
+        case ARGS_EVENT_GROUP: {
+                is_success = args_object_action_for_event_group (obj, arg_name);
                 if (is_success)
                         return NULL;
                 else
@@ -361,6 +404,13 @@ args_object_action_for_state_more_wait (ArgsObject*     obj,
                 else
                         return ARGS (OBJECT_NODE (obj->args_chain_head)->end);
         }
+        case ARGS_EVENT_GROUP: {
+                is_success = args_object_action_for_event_group (obj, arg_name);
+                if (is_success)
+                        return NULL;
+                else
+                        return ARGS (OBJECT_NODE (obj->args_chain_head)->end);
+        }
         case ARGS_EVENT_MORE:
                 args_object_action_for_event_more (obj, arg_name);
                 return NULL;
@@ -388,7 +438,8 @@ args_object_action_for_state_more (ArgsObject*     obj,
 
         node = OBJECT_NODE (obj->args_chain_head)->end;
         args_set_arg_body (ARGS (node), arg_name);
-        if (event != ARGS_EVENT_DEFAULT && event != ARGS_EVENT_S_ALONG) {
+        if (event != ARGS_EVENT_DEFAULT && event != ARGS_EVENT_S_ALONG &&
+            event != ARGS_EVENT_GROUP) {
                 args_object_change_state (obj, ARGS_STATE_FAILED);
                 return ARGS (node);
         }
@@ -405,7 +456,8 @@ args_object_action_for_state_one (ArgsObject*     obj,
 
         node = OBJECT_NODE (obj->args_chain_head)->end;
         args_set_arg_body (ARGS (node), arg_name);
-        if (event != ARGS_EVENT_DEFAULT && event != ARGS_EVENT_S_ALONG) {
+        if (event != ARGS_EVENT_DEFAULT && event != ARGS_EVENT_S_ALONG &&
+            event != ARGS_EVENT_GROUP) {
                 args_object_change_state (obj, ARGS_STATE_FAILED);
                 return ARGS (node);
         }
@@ -484,13 +536,19 @@ args_object_pull_all_args_once (ArgsObject*      obj,
 static ArgTypeRegister*
 args_object_get_register (ArgsObject* obj, const char* arg_name)
 {
-        const char* arg;
+        static ArgTypeRegister tgroup;
+        const char*            arg;
         if (!obj || !arg_name)
                 return NULL;
-        arg = args_object_get_build_in_head (arg_name, NULL);
-        if (arg) {
+        if (obj->flag_build_in &&
+            (arg = args_object_get_build_in_head (arg_name, NULL))) {
                 return ARG_TYPE_REGISTER (
                         object_hash_get_value (obj->type_register, arg, false));
+        }
+        if (args_object_is_group_head (obj, arg_name)) {
+                object_init (OBJECT (&tgroup));
+                tgroup.type = ARGS_TYPE_GROUP;
+                return &tgroup;
         }
         return ARG_TYPE_REGISTER (
                 object_hash_get_value (obj->type_register, arg_name, false));
@@ -529,4 +587,11 @@ args_object_get_args (ArgsObject* obj, const char* arg_name)
                 node = object_node_get_next (node);
         }
         return NULL;
+}
+
+void
+args_object_disable_build_in (ArgsObject* obj)
+{
+        if (obj)
+                obj->flag_build_in = false;
 }

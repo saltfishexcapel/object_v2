@@ -6,9 +6,7 @@ object_vector_element_init (ObjectVectorElement* obj)
         if (!obj)
                 return;
         object_init (OBJECT (obj));
-        object_set_destory_func (
-                OBJECT (obj),
-                OBJECT_DEST_FUNC (object_vector_element_destruction));
+        object_set_destory_func (obj, object_vector_element_destruction);
         obj->datas     = NULL;
         obj->dest_func = NULL;
         return;
@@ -66,8 +64,7 @@ object_vector_init (ObjectVector* obj)
         if (!obj)
                 return;
         object_init (OBJECT (obj));
-        object_set_destory_func (OBJECT (obj),
-                                 OBJECT_DEST_FUNC (object_vector_destory));
+        object_set_destory_func (obj, object_vector_destory);
         obj->cache_table   = NULL;
         obj->element_table = NULL;
         obj->table_size    = 0;
@@ -90,7 +87,7 @@ object_vector_destruction (ObjectVector* obj)
         if (obj->table_size == 0)
                 return;
         for (int i = 0; i < obj->table_size; ++i)
-                object_unref (OBJECT (&obj->element_table[i]));
+                object_unref (&obj->element_table[i]);
         free (obj->element_table);
 }
 
@@ -135,10 +132,8 @@ object_vector_reduce_seat (ObjectVector* obj, int seat_nums)
         if (seat_nums > obj->table_size)
                 seat_nums = obj->table_size;
         // 将需要丢掉的部分解引用
-        for (int i = 0; i < seat_nums; ++i) {
-                object_unref (
-                        OBJECT (&obj->element_table[obj->table_size - 1 - i]));
-        }
+        for (int i = 0; i < seat_nums; ++i)
+                object_unref (&obj->element_table[obj->table_size - 1 - i]);
         if (obj->table_size - seat_nums)
                 obj->element_table = OBJECT_VECTOR_ELEMENT (
                         realloc (obj->element_table,
@@ -157,7 +152,7 @@ object_vector_copy_tool1 (ObjectVectorElement* start_copy,
         // memcpy ()
         for (int i = 0; i < src_vector->table_size; ++i) {
                 start_copy[i] = src_vector->element_table[i];
-                object_addref (OBJECT (&start_copy[i]));
+                object_addref (&start_copy[i]);
         }
 }
 

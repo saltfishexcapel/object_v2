@@ -15,6 +15,7 @@ enum _ArgsType
         ARGS_TYPE_MORE,     // 一对多参数
         ARGS_TYPE_BUILD_IN, // 内嵌参数
         ARGS_TYPE_S_ALONG,  // -- 参数
+        ARGS_TYPE_GROUP,    // 组合型参数，比如 -r -v -x => -rvx
         ARGS_TYPE_BODY,     // 参数体
 };
 
@@ -39,6 +40,7 @@ enum _ArgsObjectEvent
         ARGS_EVENT_MORE,
         ARGS_EVENT_BUILD_IN,
         ARGS_EVENT_S_ALONG,
+        ARGS_EVENT_GROUP,
         ARGS_EVENT_DEFAULT
 };
 
@@ -91,6 +93,7 @@ struct _ArgsObject
         Args*           args_chain_head;
         ObjectHash*     type_register;
         ArgsObjectState state;
+        bool            flag_build_in;
 };
 
 /**
@@ -117,6 +120,8 @@ void args_object_register_type (ArgsObject*  obj,
         args_object_register_type (obj, arg_head_name, ARGS_TYPE_MORE)
 #define args_object_register_type_build_in(obj, arg_head_name) \
         args_object_register_type (obj, arg_head_name, ARGS_TYPE_BUILD_IN)
+#define args_object_register_type_group(obj, arg_head_name) \
+        args_object_register_type (obj, arg_head_name, ARGS_TYPE_GROUP)
 
 /*载入所有参数到参数对象，如果发生错误，就返回出错的那个参数*/
 const Args*
@@ -135,5 +140,10 @@ args_object_pull_all_args (ArgsObject* obj, int argc, const char** arg);
  * @brief 获取一个可能存在的参数（若相同参数出现多次可能只取第一次出现的情况）
  */
 const Args* args_object_get_args (ArgsObject* obj, const char* arg_name);
+
+/**
+ * 禁用 build-in 参数
+ */
+void args_object_disable_build_in (ArgsObject* obj);
 
 #endif
