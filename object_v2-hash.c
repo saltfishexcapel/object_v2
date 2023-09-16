@@ -129,12 +129,12 @@ retry:
                 break;
         }
 
-        if (obj->current_iter) {
-                obj->state = OBJECT_HASH_ITER_STATE_DEFAULT;
-                return obj->current_iter;
-        } else if (obj->iter_num == obj->table_size) {
+        if (obj->iter_num == obj->table_size) {
                 obj->state = OBJECT_HASH_ITER_STATE_END;
                 return NULL;
+        } else if (obj->current_iter) {
+                obj->state = OBJECT_HASH_ITER_STATE_DEFAULT;
+                return obj->current_iter;
         } else {
                 obj->state = OBJECT_HASH_ITER_STATE_NULL;
                 goto retry;
